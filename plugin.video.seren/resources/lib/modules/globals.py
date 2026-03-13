@@ -557,6 +557,11 @@ class GlobalVariables:
         self.deinit()
 
     def deinit(self):
+        if self.CACHE is not None:
+            self.CACHE.close()
+            self.CACHE = None
+        self.SETTINGS_CACHE = None
+        self.RUNTIME_SETTINGS_CACHE = None
         self.ADDON = None
         del self.ADDON
         self.PLAYLIST = None

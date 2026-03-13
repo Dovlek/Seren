@@ -77,7 +77,9 @@ class GetSourcesWindow(SingleItemWindow):
         self.setProperty('progress', str(progress))
 
     def show(self):
-        threading.Thread(target=self.doModal).start()
+        t = threading.Thread(target=self.doModal)
+        t.daemon = True
+        t.start()
         self.setProperty('process_started', 'false')
         self.setProgress(0)
 

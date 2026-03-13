@@ -175,7 +175,12 @@ class _connection(metaclass=ABCMeta):
 
     def close(self):
         if self._connection:
+            try:
+                self._connection.execute("PRAGMA busy_timeout = 0")
+            except Exception:
+                pass
             self._connection.close()
+            self._connection = None
 
     @abstractmethod
     def _create_connection(self):

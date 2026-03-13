@@ -98,6 +98,8 @@ class TraktSyncDatabase(trakt_sync.TraktSyncDatabase):
         if time.time() < (last_activities_call + (5 * 60)):
             g.log("Activities endpoint called too frequently, skipping sync", 'info')
             return None
+        elif g.abort_requested():
+            return None
         else:
             remote_activities = self.trakt_api.get_json("sync/last_activities")
             self._update_last_activities_call()
@@ -128,8 +130,10 @@ class TraktSyncDatabase(trakt_sync.TraktSyncDatabase):
                 finally:
                     self._finalize_process(update_time)
 
-            self._update_all_shows_statisics()
-            self._update_all_season_statistics()
+            if not g.abort_requested():
+                self._update_all_shows_statisics()
+            if not g.abort_requested():
+                self._update_all_season_statistics()
 
         return self.sync_errors
 
