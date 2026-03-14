@@ -110,10 +110,21 @@ class ThreadPool:
         :raises: The first exception identified if an exception is raised
         """
         try:
-            for task in concurrent.futures.as_completed(self.tasks):
-                if exception := task.exception():
-                    self.executor.shutdown(wait=False, cancel_futures=True)
-                    raise exception
+            try:
+                for task in concurrent.futures.as_completed(self.tasks, timeout=20):
+                    if exception := task.exception():
+                        self.executor.shutdown(wait=False, cancel_futures=True)
+                        raise exception
+            except concurrent.futures.TimeoutError:
+                g.log("ThreadPool: timed out after 20s, cancelling remaining tasks", "warning")
+                self.executor.shutdown(wait=False, cancel_futures=True)
+                completed = [
+                    t.result() for t in self.tasks
+                    if t.done() and not t.cancelled() and not t.exception()
+                ]
+                results = self._handle_results(iter(completed))
+                self.tasks.clear()
+                return results
 
             results = self._handle_results(task.result() for task in self.tasks if task)
             self.tasks.clear()

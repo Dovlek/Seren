@@ -123,6 +123,10 @@ def trakt_guard_response(func):
                     if method_class.refresh_token is not None:
                         return func(*args, **kwargs)
 
+            if response.status_code == 429:
+                g.log("Trakt: rate limited (429), backing off", "warning")
+                return None
+
             if response.status_code == 423:
                 xbmcgui.Dialog().notification(g.ADDON_NAME, TRAKT_STATUS_CODES.get(response.status_code))
                 g.log(
@@ -385,7 +389,7 @@ class TraktAPI(ApiBase):
         retries = Retry(
             total=4,
             backoff_factor=0.3,
-            status_forcelist=[429, 500, 502, 503, 504, 520, 521, 522, 524, 530],
+            status_forcelist=[500, 502, 503, 504, 520, 521, 522, 524, 530],
         )
         session.mount("https://", HTTPAdapter(max_retries=retries, pool_maxsize=100))
         return session

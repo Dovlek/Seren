@@ -396,6 +396,8 @@ def use_cache(cache_hours=12):
 
             if cached_data == CacheBase.NOT_CACHED:
                 fresh_result = func(*args, **kwargs)
+                if fresh_result is None:
+                    return None
                 if func.__name__ == "get_sources" and (not fresh_result or len(fresh_result[1]) == 0):
                     return fresh_result
                 try:
