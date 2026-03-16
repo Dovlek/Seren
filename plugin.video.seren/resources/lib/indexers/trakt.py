@@ -125,6 +125,9 @@ def trakt_guard_response(func):
 
             if response.status_code == 429:
                 g.log("Trakt: rate limited (429), backing off", "warning")
+                with contextlib.suppress(RanOnceAlready):
+                    with GlobalLock("trakt.rate_limit", run_once=True):
+                        g.notification(g.ADDON_NAME, "Trakt rate limit reached. Using cache wherever possible.")
                 return None
 
             if response.status_code == 423:

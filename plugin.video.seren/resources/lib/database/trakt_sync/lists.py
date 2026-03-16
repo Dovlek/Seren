@@ -36,4 +36,6 @@ class TraktSyncDatabase(trakt_sync.TraktSyncDatabase):
     def get_list_content(self, username, trakt_id, media_type, **params):
         list_item_url = f"users/{username}/lists/{trakt_id}/items/{media_type}"
         params["pull_all"] = True
+        params["cache_fallback"] = True
+        params.setdefault("limit", self.page_limit)
         return self._extract_trakt_page(list_item_url, media_type, extended="full", **params)

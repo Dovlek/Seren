@@ -1107,6 +1107,7 @@ class TraktSyncDatabase(Database):
 
         no_paging = params.get("no_paging", False)
         pull_all = params.pop("pull_all", False)
+        cache_fallback = params.pop("cache_fallback", False)
         ignore_cache = params.pop("ignore_cache", False)
         page_number = params.pop("page", 1)
 
@@ -1114,6 +1115,7 @@ class TraktSyncDatabase(Database):
             url, media_type, page_number, tools.md5_hash(dict(params))
         )
 
+        fetch_failed = False
         try:
             if pull_all:
                 get_method = self.trakt_api.get_json if ignore_cache and no_paging else self.trakt_api.get_json_cached
@@ -1135,8 +1137,17 @@ class TraktSyncDatabase(Database):
         except Exception:
             g.log(f"Trakt page fetch failed for {url}, falling back to cache", "warning")
             result = []
+            fetch_failed = True
 
-        if no_paging:
+        if no_paging or pull_all:
+            if cache_fallback:
+                if fetch_failed:
+                    cached = g.CACHE.get(cache_key)
+                    if cached != g.CACHE.NOT_CACHED:
+                        g.log(f"Serving list from cache for {url}", "info")
+                        return cached
+                elif result:
+                    g.CACHE.set(cache_key, result, expiration=datetime.timedelta(days=14))
             return result
 
         cached = g.CACHE.get(cache_key)
