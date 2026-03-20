@@ -29,6 +29,11 @@ g.log(f"### Detected Kodi Version: {g.KODI_VERSION}")
 g.log(f"### Detected timezone: {repr(g.LOCAL_TIMEZONE.zone)}")
 g.log("#############  SERVICE ENTERED KEEP ALIVE  #################")
 
+
+def _seren_wait(timeout):
+    return monitor.waitForAbort(timeout)
+
+
 monitor = SerenMonitor()
 try:
     xbmc.executebuiltin('RunPlugin("plugin://plugin.video.seren/?action=longLifeServiceManager")')
@@ -47,13 +52,13 @@ try:
 
     while not monitor.abortRequested():
         xbmc.executebuiltin('RunPlugin("plugin://plugin.video.seren/?action=runMaintenance")')
-        if not g.wait_for_abort(15):  # Sleep to make sure tokens refreshed during maintenance
+        if not _seren_wait(15):  # Sleep to make sure tokens refreshed during maintenance
             xbmc.executebuiltin('RunPlugin("plugin://plugin.video.seren/?action=syncTraktActivities")')
-        if not g.wait_for_abort(15):  # Sleep to make sure we don't possibly clobber settings
+        if not _seren_wait(15):  # Sleep to make sure we don't possibly clobber settings
             xbmc.executebuiltin('RunPlugin("plugin://plugin.video.seren/?action=cleanOrphanedMetadata")')
-        if not g.wait_for_abort(15):  # Sleep to make sure we don't possibly clobber settings
+        if not _seren_wait(15):  # Sleep to make sure we don't possibly clobber settings
             xbmc.executebuiltin('RunPlugin("plugin://plugin.video.seren/?action=updateLocalTimezone")')
-        if g.wait_for_abort(60 * randint(13, 17)):
+        if _seren_wait(60 * randint(13, 17)):
             break
 finally:
     del monitor

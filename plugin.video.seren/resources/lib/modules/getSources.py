@@ -247,6 +247,9 @@ class Sources:
             return self._finalise_results()
 
         finally:
+            for pool in [self.torrent_threads, self.hoster_threads,
+                         self.adaptive_threads, self.direct_threads]:
+                pool.executor.shutdown(wait=False, cancel_futures=True)
             self.window.close()
 
     def _handle_pre_scrape_modifiers(self):
