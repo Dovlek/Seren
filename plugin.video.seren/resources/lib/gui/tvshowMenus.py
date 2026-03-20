@@ -1,4 +1,6 @@
 import datetime
+import json
+import random
 from functools import cached_property
 from urllib import parse
 
@@ -532,6 +534,40 @@ class Menus:
     def flat_episode_list(self, args):
         self.list_builder.episode_list_builder(args["trakt_id"], no_paging=True)
 
+    def _get_genre_fanart_map(self):
+        """Build a genre_slug -> fanart_url map from the local shows DB. Cached per session."""
+        cache_key = "seren.show_genre_fanart_map"
+        cached = g.get_runtime_setting(cache_key)
+        if cached:
+            result = json.loads(cached)
+            if result:
+                return result
+
+        rows = self.shows_database.fetchall(
+            """SELECT sm.value AS trakt_object, s.art
+               FROM shows AS s
+               JOIN shows_meta AS sm ON sm.id = s.trakt_id AND sm.type = 'trakt'
+               WHERE s.art IS NOT NULL"""
+        )
+
+        genre_fanarts = {}
+        for row in rows:
+            try:
+                art = row.get("art") or {}
+                fanart = art.get("fanart") if isinstance(art, dict) else None
+                if not fanart or not isinstance(fanart, str):
+                    continue
+                trakt_object = row.get("trakt_object") or {}
+                genres = trakt_object.get("info", {}).get("genre", []) if isinstance(trakt_object, dict) else []
+                for slug in genres:
+                    genre_fanarts.setdefault(slug, []).append(fanart)
+            except Exception:
+                continue
+
+        result = {slug: random.choice(fanarts) for slug, fanarts in genre_fanarts.items()}
+        g.set_runtime_setting(cache_key, json.dumps(result))
+        return result
+
     def shows_genres(self):
         g.add_directory_item(
             g.get_language_string(30045),
@@ -544,14 +580,53 @@ class Menus:
             g.cancel_directory()
             return
 
+        hidden_setting = g.get_setting("general.tvgenres.hidden", "")
+        hidden_slugs = set(hidden_setting.split(",")) if hidden_setting else set()
+
+        dynamic_fanart = g.get_bool_setting("general.genres.artwork")
+        fanart_map = self._get_genre_fanart_map() if dynamic_fanart else {}
+
         for i in genres:
+            if i["slug"] in hidden_slugs:
+                continue
+            menu_item = g.create_icon_dict(i["slug"], g.GENRES_PATH)
+            if dynamic_fanart and i["slug"] in fanart_map:
+                menu_item["art"]["fanart"] = fanart_map[i["slug"]]
             g.add_directory_item(
                 i["name"],
                 action="showGenresGet",
                 action_args=i["slug"],
-                menu_item=g.create_icon_dict(i['slug'], g.GENRES_PATH),
+                menu_item=menu_item,
             )
         g.close_directory(g.CONTENT_GENRES)
+
+    def shows_genres_filter(self):
+        genres = self.trakt_api.get_json_cached("genres/shows")
+        if genres is None:
+            return
+
+        hidden_setting = g.get_setting("general.tvgenres.hidden", "")
+        hidden_slugs = set(hidden_setting.split(",")) if hidden_setting else set()
+
+        genre_display_list = []
+        preselect = []
+        for idx, genre in enumerate(genres):
+            li = xbmcgui.ListItem(genre["name"])
+            li.setArt({"thumb": f"{g.GENRES_PATH}{genre['slug']}.png"})
+            genre_display_list.append(li)
+            if genre["slug"] not in hidden_slugs:
+                preselect.append(idx)
+
+        selection = xbmcgui.Dialog().multiselect(
+            g.get_language_string(30737), genre_display_list, preselect=preselect, useDetails=True
+        )
+        if selection is None:
+            return
+
+        visible_slugs = {genres[i]["slug"] for i in selection}
+        new_hidden = ",".join(genre["slug"] for genre in genres if genre["slug"] not in visible_slugs)
+        g.set_setting("general.tvgenres.hidden", new_hidden)
+        g.open_addon_settings(0)
 
     def shows_genre_list(self, args):
         if args is None:
@@ -581,8 +656,9 @@ class Menus:
             extended="full",
         )
 
-        if trakt_list is None:
-            g.cancel_directory()
+        if not trakt_list:
+            xbmcgui.Dialog().notification(g.ADDON_NAME, g.get_language_string(30745), xbmcgui.NOTIFICATION_INFO, 3000)
+            xbmcplugin.endOfDirectory(g.PLUGIN_HANDLE, succeeded=True, cacheToDisc=False)
             return
 
         self.list_builder.show_list_builder(trakt_list, next_args=genre_string)

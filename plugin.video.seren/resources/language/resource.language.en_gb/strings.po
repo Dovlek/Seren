@@ -4096,3 +4096,33 @@ msgstr "Enable TorBox Hosters"
 msgctxt "#30731"
 msgid "Hide Empty Widgets"
 msgstr "Hide Empty Widgets"
+
+#: /resources/settings.xml
+msgctxt "#30732"
+msgid "Dynamic Genre Artwork"
+msgstr "Dynamic Genre Artwork"
+
+#: /resources/lib/gui/movieMenus.py
+msgctxt "#30733"
+msgid "Filter Movie Genres"
+msgstr "Filter Movie Genres"
+
+#: /resources/lib/gui/movieMenus.py
+msgctxt "#30734"
+msgid "Select movie genres to display"
+msgstr "Select movie genres to display"
+
+#: /resources/lib/gui/tvshowMenus.py
+msgctxt "#30736"
+msgid "Filter TV Genres"
+msgstr "Filter TV Genres"
+
+#: /resources/lib/gui/tvshowMenus.py
+msgctxt "#30737"
+msgid "Select TV genres to display"
+msgstr "Select TV genres to display"
+
+#: /resources/lib/gui/movieMenus.py
+msgctxt "#30745"
+msgid "No results found"
+msgstr "No results found"

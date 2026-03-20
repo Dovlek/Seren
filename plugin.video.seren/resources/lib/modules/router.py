@@ -480,6 +480,16 @@ def dispatch(params):
 
         movieMenus.Menus().movies_genre_list(action_args)
 
+    elif action == "movieGenresFilter":
+        from resources.lib.gui import movieMenus
+
+        movieMenus.Menus().movies_genres_filter()
+
+    elif action == "showGenresFilter":
+        from resources.lib.gui import tvshowMenus
+
+        tvshowMenus.Menus().shows_genres_filter()
+
     elif action == "shufflePlay":
         from resources.lib.modules import smartPlay
 

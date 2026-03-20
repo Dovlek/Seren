@@ -55,6 +55,41 @@
 					<default>false</default>
 					<control type="toggle"/>
 				</setting>
+				<setting id="general.genres.artwork" type="boolean" label="30732" help="">
+					<level>0</level>
+					<default>false</default>
+					<control type="toggle"/>
+				</setting>
+				<setting id="general.genres.filter" type="action" label="30733" help="">
+					<level>0</level>
+					<data>RunPlugin(plugin://plugin.video.seren/?action=movieGenresFilter)</data>
+					<constraints>
+						<allowempty>true</allowempty>
+					</constraints>
+					<control type="button" format="action"/>
+				</setting>
+				<setting id="general.genres.hidden" type="string" help="">
+					<level>4</level>
+					<default/>
+					<constraints>
+						<allowempty>true</allowempty>
+					</constraints>
+				</setting>
+				<setting id="general.tvgenres.filter" type="action" label="30736" help="">
+					<level>0</level>
+					<data>RunPlugin(plugin://plugin.video.seren/?action=showGenresFilter)</data>
+					<constraints>
+						<allowempty>true</allowempty>
+					</constraints>
+					<control type="button" format="action"/>
+				</setting>
+				<setting id="general.tvgenres.hidden" type="string" help="">
+					<level>4</level>
+					<default/>
+					<constraints>
+						<allowempty>true</allowempty>
+					</constraints>
+				</setting>
 			</group>
 			<group id="2" label="30592">
 				<setting id="general.flatten.episodes" type="boolean" label="30208" help="">
