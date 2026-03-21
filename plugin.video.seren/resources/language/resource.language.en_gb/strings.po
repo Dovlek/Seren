@@ -4126,3 +4126,22 @@ msgstr "Select TV genres to display"
 msgctxt "#30745"
 msgid "No results found"
 msgstr "No results found"
+
+#: /resources/lib/gui/tvshowMenus.py
+msgctxt "#30746"
+msgid "Shows in Progress"
+msgstr "Shows in Progress"
+
+#: /resources/settings.xml
+msgctxt "#30747"
+msgid "Shows in Progress Sort Style"
+msgstr "Shows in Progress Sort Style"
+
+#: /resources/settings.xml
+msgctxt "#30748"
+msgid "New Episodes First"
+msgstr "New Episodes First"
+
+msgctxt "#30749"
+msgid "Auto Play Next Episode"
+msgstr "Auto Play Next Episode"

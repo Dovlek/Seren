@@ -868,15 +868,23 @@ class TraktSyncDatabase(trakt_sync.TraktSyncDatabase):
         self._format_seasons(seasons_to_update)
         self._format_episodes(episodes_to_update)
 
-    def get_nextup_episodes(self, sort_by_last_watched=False):
+    def get_nextup_episodes(self, sort_by_last_watched=False, new_first=False):
         """
         Fetches a mock trakt response of items that a user should watch next for each show
         :param sort_by_last_watched: Optional sorting by last_watched_at column
         :type sort_by_last_watched: bool
+        :param new_first: If True, shows with a next episode that aired after last watch go to the top
+        :type new_first: bool
         :return: List of mixed episode/show pairs
         :rtype: list
         """
-        if sort_by_last_watched:
+        if new_first:
+            fallback = "inner_episodes.last_watched_at" if sort_by_last_watched else "e.air_date"
+            order_by = f"""ORDER BY
+                CASE WHEN e.air_date > (SELECT MAX(last_watched_at) FROM shows WHERE last_watched_at IS NOT NULL) THEN 0 ELSE 1 END ASC,
+                CASE WHEN e.air_date > (SELECT MAX(last_watched_at) FROM shows WHERE last_watched_at IS NOT NULL) THEN e.air_date
+                     ELSE {fallback} END DESC"""
+        elif sort_by_last_watched:
             order_by = "ORDER BY inner_episodes.last_watched_at DESC"
         else:
             order_by = "ORDER BY e.air_date DESC"
@@ -989,6 +997,71 @@ class TraktSyncDatabase(trakt_sync.TraktSyncDatabase):
                 """
             )
         )
+
+    def get_in_progress_shows(self, sort_by_last_watched=False, new_first=False):
+        """
+        Returns shows the user has started but not finished watching.
+        :param sort_by_last_watched: If True, sort by last_watched_at DESC; else by air_date DESC
+        :param new_first: If True, sort by MAX(last_watched_at, newest_unwatched_aired) DESC so
+                          shows with new episodes naturally float above shows only sorted by last watch
+        :return: List of {trakt_id} dicts in the desired order
+        """
+        if new_first:
+            row = self.fetchone(
+                "SELECT MAX(last_watched_at) AS max_lwa FROM shows WHERE last_watched_at IS NOT NULL"
+            )
+            global_max = row.get("max_lwa") if row else None
+            now_str = self._get_datetime_now()
+            if global_max:
+                query = f"""
+                    WITH progress AS (
+                        SELECT ep.trakt_show_id,
+                               MAX(CASE WHEN ep.watched = 0 AND ep.season != 0
+                                        AND ep.air_date <= '{now_str}'
+                                   THEN ep.air_date END) AS mua_any,
+                               MAX(CASE WHEN ep.watched = 0 AND ep.season != 0
+                                        AND ep.air_date > s2.last_watched_at
+                                        AND ep.air_date <= '{now_str}'
+                                   THEN ep.air_date END) AS mua_since
+                        FROM episodes AS ep
+                        JOIN shows AS s2 ON s2.trakt_id = ep.trakt_show_id
+                        GROUP BY ep.trakt_show_id
+                    )
+                    SELECT s.trakt_id
+                    FROM shows AS s
+                    JOIN progress AS p ON p.trakt_show_id = s.trakt_id
+                    WHERE s.watched_episodes > 0
+                      AND s.watched_episodes < s.episode_count
+                      AND s.trakt_id NOT IN (
+                          SELECT trakt_id FROM hidden WHERE section IN ('progress_watched')
+                      )
+                    ORDER BY
+                        CASE WHEN p.mua_any > '{global_max}' THEN 0 ELSE 1 END ASC,
+                        CASE WHEN p.mua_any > '{global_max}' THEN p.mua_any
+                             WHEN s.is_airing = 1 THEN MAX(s.last_watched_at, COALESCE(p.mua_since, s.last_watched_at))
+                             ELSE s.last_watched_at END DESC
+                """
+            else:
+                order_by = "ORDER BY s.last_watched_at DESC" if sort_by_last_watched else "ORDER BY s.air_date DESC"
+                query = f"""
+                    SELECT s.trakt_id FROM shows AS s
+                    WHERE s.watched_episodes > 0 AND s.watched_episodes < s.episode_count
+                      AND s.trakt_id NOT IN (SELECT trakt_id FROM hidden WHERE section IN ('progress_watched'))
+                    {order_by}
+                """
+        else:
+            order_by = "ORDER BY s.last_watched_at DESC" if sort_by_last_watched else "ORDER BY s.air_date DESC"
+            query = f"""
+                SELECT s.trakt_id
+                FROM shows AS s
+                WHERE s.watched_episodes > 0
+                  AND s.watched_episodes < s.episode_count
+                  AND s.trakt_id NOT IN (
+                      SELECT trakt_id FROM hidden WHERE section IN ('progress_watched')
+                  )
+                {order_by}
+            """
+        return self.fetchall(query)
 
     def get_unfinished_collected_shows(self, page=1):
         """

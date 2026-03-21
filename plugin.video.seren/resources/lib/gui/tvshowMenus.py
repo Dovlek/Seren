@@ -242,6 +242,11 @@ class Menus:
             menu_item=g.create_icon_dict("shows_nextup", g.ICONS_PATH),
         )
         g.add_directory_item(
+            g.get_language_string(30746),
+            action="showsInProgress",
+            menu_item=g.create_icon_dict("shows_progress", g.ICONS_PATH),
+        )
+        g.add_directory_item(
             g.get_language_string(30211),
             action="myUpcomingEpisodes",
             description=g.get_language_string(30437),
@@ -341,6 +346,14 @@ class Menus:
         self.list_builder.show_list_builder(trakt_list, no_paging=no_paging, sort=sort)
 
     @trakt_auth_guard
+    def shows_in_progress(self):
+        trakt_list = self.shows_database.get_in_progress_shows(
+            sort_by_last_watched=g.get_int_setting("inprogress.sort") == 1,
+            new_first=g.get_bool_setting("shows.new_episodes_first"),
+        )
+        self.list_builder.show_list_builder(trakt_list, no_paging=True)
+
+    @trakt_auth_guard
     def shows_recommended(self):
         trakt_list = self.shows_database.extract_trakt_page(
             "recommendations/shows", ignore_collected=True, extended="full"
@@ -367,7 +380,10 @@ class Menus:
         self.list_builder.show_list_builder(self.shows_database.get_recently_watched_shows(), no_paging=True)
 
     def my_next_up(self):
-        episodes = self.shows_database.get_nextup_episodes(g.get_int_setting("nextup.sort") == 1)
+        episodes = self.shows_database.get_nextup_episodes(
+            sort_by_last_watched=g.get_int_setting("nextup.sort") == 1,
+            new_first=g.get_bool_setting("shows.new_episodes_first"),
+        )
         if g.get_bool_setting("limit.nextup"):
             episodes = [i for i in episodes if i["trakt_id"]][: self.page_limit]
         self.list_builder.mixed_episode_builder(episodes, no_paging=True)

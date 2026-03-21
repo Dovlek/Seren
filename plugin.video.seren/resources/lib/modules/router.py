@@ -561,6 +561,11 @@ def dispatch(params):
 
         tvshowMenus.Menus().my_next_up()
 
+    elif action == "showsInProgress":
+        from resources.lib.gui import tvshowMenus
+
+        tvshowMenus.Menus().shows_in_progress()
+
     elif action == "providerTools":
         from resources.lib.gui import homeMenu
 
