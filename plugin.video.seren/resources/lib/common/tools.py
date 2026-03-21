@@ -418,6 +418,7 @@ def run_threaded(target_func, *args, **kwargs):
     from threading import Thread
 
     thread = Thread(target=target_func, args=args, kwargs=kwargs)
+    thread.daemon = True
     thread.start()
     return thread
 

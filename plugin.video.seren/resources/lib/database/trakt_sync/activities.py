@@ -129,6 +129,8 @@ class TraktSyncDatabase(trakt_sync.TraktSyncDatabase):
                     self._do_sync_acitivites(remote_activities)
                 finally:
                     self._finalize_process(update_time)
+                    if 'trakt_api' in self.__dict__ and 'session' in self.trakt_api.__dict__:
+                        self.trakt_api.__dict__['session'].close()
 
             if not g.abort_requested():
                 self._update_all_shows_statisics()

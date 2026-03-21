@@ -1257,6 +1257,7 @@ class GlobalVariables:
 
     def cancel_playback(self):
         self.PLAYLIST.clear()
+        xbmc.Player().stop()
         xbmcplugin.setResolvedUrl(self.PLUGIN_HANDLE, False, xbmcgui.ListItem(offscreen=True))
         self.close_busy_dialog()
         self.close_all_dialogs()
