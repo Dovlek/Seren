@@ -2220,6 +2220,16 @@
 					</dependencies>
 					<control type="spinner" format="string"/>
 				</setting>
+				<setting id="smartplay.autoplay" type="boolean" label="30749" help="">
+					<level>0</level>
+					<default>false</default>
+					<dependencies>
+						<dependency type="visible">
+							<condition operator="is" setting="smartplay.playlistcreate">true</condition>
+						</dependency>
+					</dependencies>
+					<control type="toggle"/>
+				</setting>
 				<setting id="smartplay.playingnextdialog" type="boolean" label="30104" help="">
 					<level>0</level>
 					<default>true</default>

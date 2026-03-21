@@ -112,6 +112,7 @@ class SmartPlay:
         if minimum_episode is None:
             minimum_episode = int(self.item_information["info"]["episode"]) + 1
 
+        auto_play = g.get_bool_setting("smartplay.autoplay")
         try:
             for i in self.list_builder.episode_list_builder(
                 self.show_trakt_id,
@@ -120,7 +121,8 @@ class SmartPlay:
                 smart_play=True,
                 hide_unaired=True,
             ):
-                g.PLAYLIST.add(url=i[0], listitem=i[1])
+                url = i[0] + "&auto_play=true" if auto_play else i[0]
+                g.PLAYLIST.add(url=url, listitem=i[1])
         except TypeError:
             g.log(
                 "Unable to add more episodes to the playlist, they may not be available for the requested season",

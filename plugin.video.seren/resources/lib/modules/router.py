@@ -15,6 +15,7 @@ def dispatch(params):
     action_args = params.get("action_args")
     pack_select = params.get("packSelect")
     source_select = params.get("source_select") == "true"
+    auto_play = params.get("auto_play") == "true"
     overwrite_cache = params.get("seren_reload") == "true"
     resume = params.get("resume")
     force_resume_check = params.get("forceresumecheck") == "true"
@@ -164,7 +165,7 @@ def dispatch(params):
             else:
                 source_select_style = "Movie"
 
-            if g.get_int_setting(f"general.playstyle{source_select_style}") == 1 or source_select:
+            if (g.get_int_setting(f"general.playstyle{source_select_style}") == 1 or source_select) and not auto_play:
 
                 if background:
                     background.set_text(g.get_language_string(30178))
