@@ -141,6 +141,7 @@ class ThreadPool:
             except concurrent.futures.TimeoutError:
                 g.log("ThreadPool: timed out after 20s, cancelling remaining tasks", "warning")
                 self.executor.shutdown(wait=False, cancel_futures=True)
+                self.executor = ThreadPoolExecutor(max_workers=self.max_workers)
                 completed = [
                     t.result() for t in self.tasks
                     if t.done() and not t.cancelled() and not t.exception()

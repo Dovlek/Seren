@@ -68,6 +68,7 @@ class Menus:
             for i in self.bookmark_database.get_all_bookmark_items("episode")
             if i["trakt_show_id"] not in hidden_shows
         ][self.page_start : self.page_end]
+        g.set_plugin_category(g.get_language_string(30043))
         self.list_builder.mixed_episode_builder(bookmarked_items)
 
     @staticmethod
@@ -288,6 +289,15 @@ class Menus:
 
     def generic_endpoint(self, endpoint):
         trakt_list = self.shows_database.extract_trakt_page(f"shows/{endpoint}", page=g.PAGE, extended="full")
+        _endpoint_labels = {
+            "trending": g.get_language_string(30006),
+            "popular": g.get_language_string(30004),
+            "played": g.get_language_string(30007),
+            "watched": g.get_language_string(30008),
+            "collected": g.get_language_string(30009),
+            "anticipated": g.get_language_string(30010),
+        }
+        g.set_plugin_category(_endpoint_labels.get(endpoint, endpoint.title()))
         self.list_builder.show_list_builder(trakt_list)
 
     def shows_popular_recent(self):
@@ -295,6 +305,7 @@ class Menus:
         trakt_list = self.shows_database.extract_trakt_page(
             "shows/popular", years=year_range, page=g.PAGE, extended="full"
         )
+        g.set_plugin_category(g.get_language_string(30347))
         self.list_builder.show_list_builder(trakt_list)
 
     def shows_trending_recent(self):
@@ -302,6 +313,7 @@ class Menus:
         trakt_list = self.shows_database.extract_trakt_page(
             "shows/trending", years=year_range, page=g.PAGE, extended="full"
         )
+        g.set_plugin_category(g.get_language_string(30348))
         self.list_builder.show_list_builder(trakt_list)
 
     @trakt_auth_guard
@@ -315,6 +327,7 @@ class Menus:
             )
             offset = (g.PAGE - 1) * self.page_limit
             trakt_list = trakt_list[offset : offset + self.page_limit]
+        g.set_plugin_category(g.get_language_string(30014))
         self.list_builder.show_list_builder(trakt_list, no_paging=no_paging, sort=sort)
 
     @trakt_auth_guard
@@ -330,6 +343,7 @@ class Menus:
             sort_by="added",
             sort_how="asc" if g.get_int_setting("general.watchlist.sort") == 1 else "desc"
         )
+        g.set_plugin_category(g.get_language_string(30015))
         self.list_builder.show_list_builder(trakt_list, no_paging=paginate)
 
     @trakt_auth_guard
@@ -358,6 +372,7 @@ class Menus:
         trakt_list = self.shows_database.extract_trakt_page(
             "recommendations/shows", ignore_collected=True, extended="full"
         )
+        g.set_plugin_category(g.get_language_string(30005))
         self.list_builder.show_list_builder(trakt_list)
 
     def shows_new(self):
@@ -432,6 +447,7 @@ class Menus:
         trakt_list = self.shows_database.extract_trakt_page(
             "shows/popular", networks=network, page=g.PAGE, extended="full"
         )
+        g.set_plugin_category(network)
         self.list_builder.show_list_builder(trakt_list)
         g.close_directory(g.CONTENT_SHOW)
 
@@ -441,6 +457,7 @@ class Menus:
         trakt_list = self.shows_database.extract_trakt_page(
             f"shows/updates/{date}", extended="full", ignore_cache=True, hide_watched=False, hide_unaired=False
         )
+        g.set_plugin_category(g.get_language_string(30011))
         self.list_builder.show_list_builder(trakt_list, no_paging=True)
 
     def shows_search_history(self):
@@ -488,7 +505,6 @@ class Menus:
             fields="title,aliases",
             page=g.PAGE,
             extended="full",
-            field="title",
             hide_unaired=False,
             hide_watched=False,
         )
@@ -496,6 +512,7 @@ class Menus:
         if not trakt_list:
             g.cancel_directory()
             return
+        g.set_plugin_category(query)
         self.list_builder.show_list_builder(
             [show for show in trakt_list if float(show["trakt_object"]["info"]["score"]) > 0],
             hide_unaired=False,
@@ -539,6 +556,7 @@ class Menus:
         except KeyError:
             g.cancel_directory()
             return
+        g.set_plugin_category(query.title())
         self.list_builder.show_list_builder(trakt_list, hide_watched=False, hide_unaired=False)
 
     def show_seasons(self, args):
@@ -677,10 +695,12 @@ class Menus:
             xbmcplugin.endOfDirectory(g.PLUGIN_HANDLE, succeeded=True, cacheToDisc=False)
             return
 
+        g.set_plugin_category(genre_string.split(",")[0].replace("-", " ").title())
         self.list_builder.show_list_builder(trakt_list, next_args=genre_string)
 
     def shows_related(self, args):
         trakt_list = self.shows_database.extract_trakt_page(f"shows/{args}/related", extended="full")
+        g.set_plugin_category("Related")
         self.list_builder.show_list_builder(trakt_list)
 
     def shows_years(self, year=None):
@@ -693,6 +713,7 @@ class Menus:
             trakt_list = self.shows_database.extract_trakt_page(
                 "shows/popular", years=year, page=g.PAGE, extended="full", hide_watched=False
             )
+            g.set_plugin_category(str(year))
             self.list_builder.show_list_builder(trakt_list)
 
     @trakt_auth_guard

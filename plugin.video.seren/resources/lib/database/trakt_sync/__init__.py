@@ -1134,6 +1134,8 @@ class TraktSyncDatabase(Database):
                         sliced = result[self.page_limit * (page_number - 1) : self.page_limit * page_number]
                         g.CACHE.set(cache_key, sliced, expiration=datetime.timedelta(days=14))
                         return sliced
+                if result and not no_paging:
+                    return result[self.page_limit * (page_number - 1) : self.page_limit * page_number]
         except Exception:
             g.log(f"Trakt page fetch failed for {url}, falling back to cache", "warning")
             result = []

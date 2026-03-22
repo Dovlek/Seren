@@ -237,6 +237,16 @@ class Menus:
 
     def generic_endpoint(self, endpoint):
         trakt_list = self.movies_database.extract_trakt_page(f"movies/{endpoint}", extended="full", page=g.PAGE)
+        _endpoint_labels = {
+            "trending": g.get_language_string(30006),
+            "popular": g.get_language_string(30004),
+            "played": g.get_language_string(30007),
+            "watched": g.get_language_string(30008),
+            "collected": g.get_language_string(30009),
+            "anticipated": g.get_language_string(30010),
+            "boxoffice": g.get_language_string(30012),
+        }
+        g.set_plugin_category(_endpoint_labels.get(endpoint, endpoint.title()))
         self.list_builder.movie_menu_builder(trakt_list)
 
     def movie_popular_recent(self):
@@ -244,6 +254,7 @@ class Menus:
         trakt_list = self.movies_database.extract_trakt_page(
             "movies/popular", years=year_range, page=g.PAGE, extended="full"
         )
+        g.set_plugin_category(g.get_language_string(30347))
         self.list_builder.movie_menu_builder(trakt_list)
 
     def movie_trending_recent(self):
@@ -251,6 +262,7 @@ class Menus:
         trakt_list = self.movies_database.extract_trakt_page(
             "movies/trending", years=year_range, page=g.PAGE, extended="full"
         )
+        g.set_plugin_category(g.get_language_string(30348))
         self.list_builder.movie_menu_builder(trakt_list)
 
     @trakt_auth_guard
@@ -259,12 +271,14 @@ class Menus:
         bookmarked_items = [
             i for i in self.bookmark_database.get_all_bookmark_items("movie") if i["trakt_id"] not in hidden_movies
         ][self.page_start : self.page_end]
+        g.set_plugin_category(g.get_language_string(30043))
         self.list_builder.movie_menu_builder(bookmarked_items)
 
     @trakt_auth_guard
     def my_movie_collection(self):
         paginate = not g.get_bool_setting("general.paginatecollection")
         sort = "title" if paginate else False
+        g.set_plugin_category(g.get_language_string(30014))
         self.list_builder.movie_menu_builder(
             self.movies_database.get_collected_movies(g.PAGE),
             no_paging=paginate,
@@ -284,6 +298,7 @@ class Menus:
             sort_by="added",
             sort_how="asc" if g.get_int_setting("general.watchlist.sort") == 1 else "desc"
         )
+        g.set_plugin_category(g.get_language_string(30015))
         self.list_builder.movie_menu_builder(trakt_list, no_paging=paginate)
 
     @trakt_auth_guard
@@ -294,6 +309,7 @@ class Menus:
             extended="full",
             page=g.PAGE,
         )
+        g.set_plugin_category(g.get_language_string(30005))
         self.list_builder.movie_menu_builder(trakt_list)
 
     def movies_updated(self):
@@ -302,6 +318,7 @@ class Menus:
         date = datetime.date.today() - datetime.timedelta(days=29)
         date = g.datetime_to_string(date)
         trakt_list = self.movies_database.extract_trakt_page(f"movies/updates/{date}", page=g.PAGE, extended="full")
+        g.set_plugin_category(g.get_language_string(30011))
         self.list_builder.movie_menu_builder(trakt_list)
 
     def movies_search_history(self):
@@ -345,6 +362,7 @@ class Menus:
         self.movies_search_results(query)
 
     def movies_search_results(self, query):
+        g.set_plugin_category(query)
         trakt_list = self.movies_database.extract_trakt_page(
             "search/movie",
             query=query,
@@ -365,6 +383,7 @@ class Menus:
         )
 
     def movies_related(self, args):
+        g.set_plugin_category("Related")
         trakt_list = self.movies_database.extract_trakt_page(f"movies/{args}/related", page=g.PAGE, extended="full")
         self.list_builder.movie_menu_builder(trakt_list)
 
@@ -379,6 +398,7 @@ class Menus:
         g.close_directory(g.CONTENT_MENU)
 
     def movie_years_results(self, year):
+        g.set_plugin_category(str(year))
         trakt_list = self.movies_database.extract_trakt_page("movies/popular", years=year, page=g.PAGE, extended="full")
         self.list_builder.movie_menu_builder(trakt_list)
 
@@ -415,6 +435,7 @@ class Menus:
         except KeyError:
             g.cancel_directory()
             return
+        g.set_plugin_category(query.title())
         self.list_builder.movie_menu_builder(trakt_list, hide_watched=False, hide_unaired=False)
 
     def _get_genre_fanart_map(self):
@@ -539,6 +560,7 @@ class Menus:
             xbmcplugin.endOfDirectory(g.PLUGIN_HANDLE, succeeded=True, cacheToDisc=False)
             return
 
+        g.set_plugin_category(genre_string.split(",")[0].replace("-", " ").title())
         self.list_builder.movie_menu_builder(trakt_list, next_args=genre_string)
 
     @trakt_auth_guard

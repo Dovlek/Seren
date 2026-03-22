@@ -35,6 +35,8 @@ class ListsHelper:
             g.cancel_directory()
             return
 
+        g.set_plugin_category(arguments.get('name') or str(arguments['trakt_id']))
+
         if media_type in ['tvshow', 'shows']:
             self.builder.show_list_builder(list_items, no_paging=self.no_paging)
         elif media_type in ['movie', 'movies']:
@@ -76,7 +78,7 @@ class ListsHelper:
             [
                 tools.smart_merge_dictionary(
                     trakt_object(trakt_list),
-                    {'args': {'trakt_id': get(trakt_list, 'trakt_id'), 'username': get(trakt_list, 'username')}},
+                    {'args': {'trakt_id': get(trakt_list, 'trakt_id'), 'username': get(trakt_list, 'username'), 'name': get(trakt_list, 'title')}},
                 )
                 for trakt_list in trakt_lists
             ],

@@ -1567,6 +1567,20 @@ class GlobalVariables:
 
         return info_dict
 
+    def set_plugin_category(self, category):
+        """Set Container.PluginCategory for skin breadcrumbs.
+
+        In widget context (home screen), sets 'Page N' for pages > 1 so the
+        skin can show page info alongside the static widget row title.
+        In direct Seren navigation, sets the full 'Category - Page N' label.
+        """
+        if self.FROM_WIDGET:
+            if self.PAGE > 1:
+                xbmcplugin.setPluginCategory(self.PLUGIN_HANDLE, f"Page {self.PAGE}")
+        else:
+            label = category if self.PAGE == 1 else f"{category} - Page {self.PAGE}"
+            xbmcplugin.setPluginCategory(self.PLUGIN_HANDLE, label)
+
     def close_directory(self, content_type, sort=False, cache=False):
         if sort == "title":
             xbmcplugin.addSortMethod(self.PLUGIN_HANDLE, xbmcplugin.SORT_METHOD_LABEL_IGNORE_THE)
