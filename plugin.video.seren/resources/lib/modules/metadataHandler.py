@@ -164,7 +164,7 @@ class MetadataHandler:
 
     # region format art
     def format_db_object(self, db_object):
-        return [self.format_meta(i) for i in db_object]
+        return [self.format_meta(i) for i in db_object if i.get("trakt_object") is not None]
 
     def format_meta(self, db_object):
         trakt_data = db_object.get("trakt_object")
@@ -255,6 +255,8 @@ class MetadataHandler:
         data["art"] = tools.smart_merge_dictionary(data["art"], show_season_art_mixin, True)
 
     def _apply_best_fit_meta_data(self, trakt_data, tmdb_data, tvdb_data, fanart_object, omdb_object):
+        if trakt_data is None:
+            return {}
         media_type = trakt_data["info"]["mediatype"]
         result = {}
 
