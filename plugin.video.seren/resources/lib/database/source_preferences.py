@@ -23,8 +23,14 @@ def get_source_preference(trakt_id):
 
 
 def set_source_preference(trakt_id, source):
-    """Save torrent source info keyed by trakt_id. Silently skips non-torrent or incomplete sources."""
-    required = {"type", "hash", "magnet", "debrid_provider", "release_title"}
+    """Save source info keyed by trakt_id. Supports torrent and cloud sources."""
+    source_type = source.get("type")
+    if source_type == "torrent":
+        required = {"type", "hash", "magnet", "debrid_provider", "release_title"}
+    elif source_type == "cloud":
+        required = {"type", "url", "debrid_provider", "release_title"}
+    else:
+        return
     if not required.issubset(source.keys()):
         return
     entry = {k: source[k] for k in required}

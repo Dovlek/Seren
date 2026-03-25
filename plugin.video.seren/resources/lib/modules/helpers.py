@@ -53,10 +53,11 @@ class Resolverhelper:
                     f"last_resolved_release_title.{item_information['info']['trakt_show_id']}", release_title
                 )
             resolved_source = next(
-                (s for s in sources if s.get('release_title') == release_title and s.get('type') == 'torrent'),
+                (s for s in sources if s.get('release_title') == release_title
+                 and s.get('type') in ('torrent', 'cloud')),
                 None
             )
-            if resolved_source and resolved_source.get('hash') and resolved_source.get('magnet'):
+            if resolved_source:
                 from resources.lib.database.source_preferences import set_source_preference
                 set_source_preference(item_information['info']['trakt_id'], resolved_source)
         return stream_link
