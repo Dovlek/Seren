@@ -40,10 +40,54 @@ def dispatch(params):
         Menus().generic_endpoint(endpoint)
 
     elif action == "forceResumeShow":
-        from resources.lib.modules import smartPlay
+        from resources.lib.modules import smartPlay as _smartPlay
         from resources.lib.common import tools
+        from resources.lib.database.trakt_sync.shows import TraktSyncDatabase
+        from resources.lib.database.trakt_sync.bookmark import TraktSyncDatabase as BookmarkDB
 
-        smartPlay.SmartPlay(tools.get_item_information(action_args)).resume_show()
+        smart = _smartPlay.SmartPlay(tools.get_item_information(action_args))
+
+        # Prefer the most recently paused episode for this show (bookmark-first)
+        bookmarked = BookmarkDB().fetchone(
+            """SELECT ep.season, ep.number
+               FROM bookmarks AS bm
+               INNER JOIN episodes AS ep ON bm.trakt_id = ep.trakt_id
+               WHERE bm.type = 'episode' AND ep.trakt_show_id = ?
+               ORDER BY Datetime(bm.paused_at) DESC
+               LIMIT 1""",
+            (smart.show_trakt_id,),
+        )
+
+        if bookmarked:
+            season_num = bookmarked["season"]
+            episode_num = bookmarked["number"]
+        else:
+            # Fall back to next unwatched episode
+            next_items = TraktSyncDatabase().get_nextup_episodes()
+            next_item = next(
+                (item for item in next_items if item.get("trakt_show_id") == smart.show_trakt_id),
+                None,
+            )
+            if next_item is None:
+                g.notification(g.ADDON_NAME, "No episode available to resume")
+                return
+            season_num = next_item["season_x"]
+            episode_num = next_item["episode_x"]
+
+        season_id = smart.seasons_info.get(season_num, {}).get("trakt_id")
+
+        episode_items = list(
+            smart.list_builder.episode_list_builder(
+                smart.show_trakt_id, season_id,
+                minimum_episode=episode_num,
+                smart_play=True, hide_unaired=True,
+            )
+        )
+        if not episode_items:
+            g.notification(g.ADDON_NAME, "No episode available to resume")
+        else:
+            episode_url = episode_items[0][0]
+            xbmc.executebuiltin(f'PlayMedia("{episode_url}")')
 
     elif action == "moviesHome":
         from resources.lib.gui import movieMenus
@@ -206,7 +250,8 @@ def dispatch(params):
             else:
                 source_select_style = "Movie"
 
-            if (g.get_int_setting(f"general.playstyle{source_select_style}") == 1 or source_select) and not auto_play:
+            fast_resume_active = resume_time is not None and g.get_bool_setting("general.fastResume", True)
+            if (g.get_int_setting(f"general.playstyle{source_select_style}") == 1 or source_select) and not auto_play and not fast_resume_active:
 
                 if background:
                     background.set_text(g.get_language_string(30178))
