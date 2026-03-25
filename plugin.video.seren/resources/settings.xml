@@ -2169,6 +2169,11 @@
 					</constraints>
 					<control type="spinner" format="string"/>
 				</setting>
+				<setting id="general.fastResume" type="boolean" label="30750" help="">
+					<level>0</level>
+					<default>true</default>
+					<control type="toggle"/>
+				</setting>
 			</group>
 			<group id="3" label="30603">
 				<setting id="general.autotrynext" type="boolean" label="30195" help="">
@@ -2374,6 +2379,14 @@
 				<setting id="cache.clearsearch" type="action" label="30180" help="">
 					<level>0</level>
 					<data>RunPlugin(plugin://plugin.video.seren/?action=clearSearchHistory)</data>
+					<constraints>
+						<allowempty>true</allowempty>
+					</constraints>
+					<control type="button" format="action"/>
+				</setting>
+				<setting id="cache.clearfastresume" type="action" label="30751" help="">
+					<level>0</level>
+					<data>RunPlugin(plugin://plugin.video.seren/?action=clearFastResumeCache)</data>
 					<constraints>
 						<allowempty>true</allowempty>
 					</constraints>

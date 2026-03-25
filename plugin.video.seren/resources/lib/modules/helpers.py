@@ -47,10 +47,18 @@ class Resolverhelper:
                 if stream_link:
                     break
 
-        if item_information['info']['mediatype'] == g.MEDIA_EPISODE and release_title:
-            g.set_runtime_setting(
-                f"last_resolved_release_title.{item_information['info']['trakt_show_id']}", release_title
+        if release_title:
+            if item_information['info']['mediatype'] == g.MEDIA_EPISODE:
+                g.set_runtime_setting(
+                    f"last_resolved_release_title.{item_information['info']['trakt_show_id']}", release_title
+                )
+            resolved_source = next(
+                (s for s in sources if s.get('release_title') == release_title and s.get('type') == 'torrent'),
+                None
             )
+            if resolved_source and resolved_source.get('hash') and resolved_source.get('magnet'):
+                from resources.lib.database.source_preferences import set_source_preference
+                set_source_preference(item_information['info']['trakt_id'], resolved_source)
         return stream_link
 
     def close_window(self):

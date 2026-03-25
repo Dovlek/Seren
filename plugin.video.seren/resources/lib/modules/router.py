@@ -142,6 +142,47 @@ def dispatch(params):
                 return
 
             resume_time = smart_play.handle_resume_prompt(resume, force_resume_off, force_resume_on, force_resume_check)
+
+            # Fast resume: try saved source before running full scrape
+            if resume_time is not None and g.get_bool_setting("general.fastResume", True):
+                from resources.lib.database.source_preferences import get_source_preference
+                saved_source = get_source_preference(item_information['info']['trakt_id'])
+                if saved_source:
+                    from resources.lib.modules.resolver import Resolver
+                    from resources.lib.gui.windows.resume_loading_window import ResumeLoadingWindow
+                    from resources.lib.database.skinManager import SkinManager
+                    from resources.lib.common import tools
+
+                    loading_window = ResumeLoadingWindow(
+                        *SkinManager().confirm_skin_path('resume_loading.xml'),
+                        item_information=item_information,
+                        saved_source=saved_source,
+                    )
+
+                    # Show window in BG thread so main thread can resolve immediately.
+                    # Window stays open until close_all_dialogs() fires in _start_playback()
+                    # (onAVStarted) — giving a seamless transition straight into video.
+                    tools.run_threaded(loading_window.doModal)
+
+                    try:
+                        stream_link, _ = Resolver().resolve_single_source(saved_source, item_information, silent=True)
+                    except Exception:
+                        stream_link = None
+
+                    if stream_link:
+                        from resources.lib.modules import player as _player
+                        seren_player = _player.SerenPlayer()
+                        try:
+                            seren_player.play_source(stream_link, item_information, resume_time=resume_time)
+                        finally:
+                            del seren_player
+                        return
+
+                    # Resolution failed — close busy dialog + window before falling back to full scrape
+                    g.close_busy_dialog()
+                    loading_window.close()
+                    g.notification(g.ADDON_NAME, "Previous source unavailable, finding new source...")
+
             background = helpers.show_persistent_window_if_required(item_information)
             # Clear out last resolved title for a show if we are doing a rescrape
             if overwrite_cache and item_information['info']['mediatype'] == g.MEDIA_EPISODE:
@@ -439,6 +480,14 @@ def dispatch(params):
         from resources.lib.common import tools
 
         g.clear_cache()
+
+    elif action == "clearFastResumeCache":
+        import os
+        from resources.lib.database.source_preferences import _path as _sp_path
+        path = _sp_path()
+        if os.path.exists(path):
+            os.remove(path)
+        g.notification(g.ADDON_NAME, "Fast resume cache cleared")
 
     elif action == "traktManager":
         from resources.lib.gui.trakt_context_menu import TraktContextMenu

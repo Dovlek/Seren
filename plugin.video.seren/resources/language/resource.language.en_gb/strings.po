@@ -4145,3 +4145,11 @@ msgstr "New Episodes First"
 msgctxt "#30749"
 msgid "Auto Play Next Episode"
 msgstr "Auto Play Next Episode"
+
+msgctxt "#30750"
+msgid "Fast Resume"
+msgstr "Fast Resume"
+
+msgctxt "#30751"
+msgid "Clear Fast Resume Cache"
+msgstr "Clear Fast Resume Cache"
