@@ -305,7 +305,7 @@ class Menus:
         trakt_list = self.shows_database.extract_trakt_page(
             "shows/popular", years=year_range, page=g.PAGE, extended="full"
         )
-        g.set_plugin_category(g.get_language_string(30347))
+        g.set_plugin_category(g.get_language_string(30345))
         self.list_builder.show_list_builder(trakt_list)
 
     def shows_trending_recent(self):
@@ -313,7 +313,7 @@ class Menus:
         trakt_list = self.shows_database.extract_trakt_page(
             "shows/trending", years=year_range, page=g.PAGE, extended="full"
         )
-        g.set_plugin_category(g.get_language_string(30348))
+        g.set_plugin_category(g.get_language_string(30346))
         self.list_builder.show_list_builder(trakt_list)
 
     @trakt_auth_guard

@@ -1118,14 +1118,18 @@ class TraktSyncDatabase(Database):
         fetch_failed = False
         try:
             if pull_all:
-                get_method = self.trakt_api.get_json if ignore_cache and no_paging else self.trakt_api.get_json_cached
-                if ignore_cache and not no_paging and page_number == 1:
-                    params['overwrite_cache'] = True
-                _handle_page(get_method(url, **params))
-                if len(result) >= (self.page_limit * page_number) and not no_paging:
-                    sliced = result[self.page_limit * (page_number - 1) : self.page_limit * page_number]
-                    g.CACHE.set(cache_key, sliced, expiration=datetime.timedelta(days=14))
-                    return sliced
+                if no_paging:
+                    get_method = self.trakt_api.get_json if ignore_cache else self.trakt_api.get_json_cached
+                    _handle_page(get_method(url, **params))
+                else:
+                    if ignore_cache and page_number == 1:
+                        params['overwrite_cache'] = True
+                    params['page'] = page_number
+                    _handle_page(self.trakt_api.get_json_cached(url, **params))
+                    if result:
+                        sliced = result[:self.page_limit]
+                        g.CACHE.set(cache_key, sliced, expiration=datetime.timedelta(days=14))
+                        return sliced
             else:
                 params["limit"] = params.pop("page", self.page_limit)
                 for page in self.trakt_api.get_all_pages_json(url, ignore_cache=ignore_cache, **params):

@@ -1568,18 +1568,41 @@ class GlobalVariables:
         return info_dict
 
     def set_plugin_category(self, category):
-        """Set Container.PluginCategory for skin breadcrumbs.
+        resolved = self._lookup_widget_label() or category
+        label = resolved if self.PAGE == 1 else f"{resolved} - Page {self.PAGE}"
+        xbmcplugin.setPluginCategory(self.PLUGIN_HANDLE, label)
 
-        In widget context (home screen), sets 'Page N' for pages > 1 so the
-        skin can show page info alongside the static widget row title.
-        In direct Seren navigation, sets the full 'Category - Page N' label.
-        """
-        if self.FROM_WIDGET:
-            if self.PAGE > 1:
-                xbmcplugin.setPluginCategory(self.PLUGIN_HANDLE, f"Page {self.PAGE}")
-        else:
-            label = category if self.PAGE == 1 else f"{category} - Page {self.PAGE}"
-            xbmcplugin.setPluginCategory(self.PLUGIN_HANDLE, label)
+    def _lookup_widget_label(self):
+        try:
+            import sqlite3
+            import xbmcvfs
+            action = self.REQUEST_PARAMS.get('action', '')
+            if not action:
+                return None
+            db_path = xbmcvfs.translatePath(
+                "special://userdata/addon_data/script.nimbus.helper/cpath_cache.db"
+            )
+            with sqlite3.connect(db_path, timeout=2) as db:
+                if action == 'traktList':
+                    aa = self.REQUEST_PARAMS.get('action_args') or {}
+                    trakt_id = aa.get('trakt_id') if isinstance(aa, dict) else None
+                    username = aa.get('username') if isinstance(aa, dict) else None
+                    if trakt_id and username:
+                        rows = db.execute(
+                            "SELECT cpath_header FROM custom_paths "
+                            "WHERE cpath_path LIKE ? AND cpath_path LIKE ?",
+                            (f"%22trakt_id%22%3A+{trakt_id}%", f"%{username}%"),
+                        ).fetchall()
+                        return rows[0][0] if rows else None
+                else:
+                    rows = db.execute(
+                        "SELECT cpath_header FROM custom_paths WHERE cpath_path LIKE ?",
+                        (f"%action={action}%",),
+                    ).fetchall()
+                    return rows[0][0] if rows else None
+        except Exception:
+            pass
+        return None
 
     def close_directory(self, content_type, sort=False, cache=False):
         if sort == "title":
