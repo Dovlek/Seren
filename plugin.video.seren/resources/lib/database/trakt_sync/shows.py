@@ -1004,7 +1004,7 @@ class TraktSyncDatabase(trakt_sync.TraktSyncDatabase):
         :param sort_by_last_watched: If True, sort by last_watched_at DESC; else by air_date DESC
         :param new_first: If True, sort by MAX(last_watched_at, newest_unwatched_aired) DESC so
                           shows with new episodes naturally float above shows only sorted by last watch
-        :return: List of {trakt_id} dicts in the desired order
+        :return: List of {trakt_id, trakt_object} dicts in the desired order
         """
         if new_first:
             row = self.fetchone(
@@ -1027,8 +1027,10 @@ class TraktSyncDatabase(trakt_sync.TraktSyncDatabase):
                         JOIN shows AS s2 ON s2.trakt_id = ep.trakt_show_id
                         GROUP BY ep.trakt_show_id
                     )
-                    SELECT s.trakt_id
+                    SELECT s.trakt_id,
+                           sm.value AS trakt_object
                     FROM shows AS s
+                    LEFT JOIN shows_meta AS sm ON sm.id = s.trakt_id AND sm.type = 'trakt'
                     JOIN progress AS p ON p.trakt_show_id = s.trakt_id
                     WHERE s.watched_episodes > 0
                       AND s.watched_episodes < s.episode_count
@@ -1044,7 +1046,10 @@ class TraktSyncDatabase(trakt_sync.TraktSyncDatabase):
             else:
                 order_by = "ORDER BY s.last_watched_at DESC" if sort_by_last_watched else "ORDER BY s.air_date DESC"
                 query = f"""
-                    SELECT s.trakt_id FROM shows AS s
+                    SELECT s.trakt_id,
+                           sm.value AS trakt_object
+                    FROM shows AS s
+                    LEFT JOIN shows_meta AS sm ON sm.id = s.trakt_id AND sm.type = 'trakt'
                     WHERE s.watched_episodes > 0 AND s.watched_episodes < s.episode_count
                       AND s.trakt_id NOT IN (SELECT trakt_id FROM hidden WHERE section IN ('progress_watched'))
                     {order_by}
@@ -1052,8 +1057,10 @@ class TraktSyncDatabase(trakt_sync.TraktSyncDatabase):
         else:
             order_by = "ORDER BY s.last_watched_at DESC" if sort_by_last_watched else "ORDER BY s.air_date DESC"
             query = f"""
-                SELECT s.trakt_id
+                SELECT s.trakt_id,
+                       sm.value AS trakt_object
                 FROM shows AS s
+                LEFT JOIN shows_meta AS sm ON sm.id = s.trakt_id AND sm.type = 'trakt'
                 WHERE s.watched_episodes > 0
                   AND s.watched_episodes < s.episode_count
                   AND s.trakt_id NOT IN (
