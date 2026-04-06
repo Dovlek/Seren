@@ -63,16 +63,35 @@ def dispatch(params):
             episode_num = bookmarked["number"]
         else:
             # Fall back to next unwatched episode
-            next_items = TraktSyncDatabase().get_nextup_episodes()
+            db = TraktSyncDatabase()
+            next_items = db.get_nextup_episodes()
             next_item = next(
                 (item for item in next_items if item.get("trakt_show_id") == smart.show_trakt_id),
                 None,
             )
             if next_item is None:
-                g.notification(g.ADDON_NAME, "No episode available to resume")
-                return
-            season_num = next_item["season_x"]
-            episode_num = next_item["episode_x"]
+                # next-up found nothing (e.g. user watched last season, skipped earlier ones)
+                # find the first unwatched aired episode anywhere in the show
+                first_unwatched = db.fetchone(
+                    """SELECT e.season AS season_x, e.number AS episode_x
+                       FROM episodes AS e
+                       WHERE e.trakt_show_id = ?
+                         AND e.season > 0
+                         AND e.watched = 0
+                         AND Datetime(e.air_date) < Datetime('now')
+                       ORDER BY e.season ASC, e.number ASC
+                       LIMIT 1""",
+                    (smart.show_trakt_id,),
+                )
+                if first_unwatched is not None:
+                    season_num = first_unwatched["season_x"]
+                    episode_num = first_unwatched["episode_x"]
+                else:
+                    season_num = 1
+                    episode_num = 1
+            else:
+                season_num = next_item["season_x"]
+                episode_num = next_item["episode_x"]
 
         season_id = smart.seasons_info.get(season_num, {}).get("trakt_id")
 
