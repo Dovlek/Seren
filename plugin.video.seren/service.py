@@ -50,6 +50,8 @@ try:
 
     xbmc.executebuiltin('RunPlugin("plugin://plugin.video.seren/?action=torrentCacheCleanup")')
 
+    _seren_wait(10)  # Let widgets load before maintenance tasks compete for Python interpreter slots
+
     while not monitor.abortRequested():
         xbmc.executebuiltin('RunPlugin("plugin://plugin.video.seren/?action=runMaintenance")')
         if not _seren_wait(15):  # Sleep to make sure tokens refreshed during maintenance

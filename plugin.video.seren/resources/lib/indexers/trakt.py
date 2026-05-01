@@ -52,6 +52,8 @@ def _log_connection_error(args, kwarg, e):
 
 
 def _connection_failure_dialog():
+    if g.abort_requested():
+        return
     if (
         g.get_float_setting("general.trakt.failure.timeout") + (2 * 60 * (60 * 60)) < time.time()
         and not xbmc.Player().isPlaying()
@@ -583,7 +585,7 @@ class TraktAPI(ApiBase):
         :param params: URL params for request
         :return: request response
         """
-        timeout = params.pop("timeout", 10)
+        timeout = params.pop("timeout", 4.5)
         self._try_add_default_paging(params)
         self._clean_params(params)
         return self.session.get(
@@ -809,6 +811,8 @@ class TraktAPI(ApiBase):
             "watched",
             "collected",
             "my_rating",
+            "plays",
+            "time",
         ]
 
         if sort_by not in supported_sorts:
@@ -844,6 +848,10 @@ class TraktAPI(ApiBase):
             items = self._collected_sort(items)
         elif sort_by == "my_rating":
             items = self._rating_sort(items)
+        elif sort_by == "plays":
+            items = sorted(items, key=lambda x: x.get("plays", 0))
+        elif sort_by == "time":
+            items = sorted(items, key=lambda x: x.get("watched_at", ""))
 
         if sort_how == "desc":
             items.reverse()

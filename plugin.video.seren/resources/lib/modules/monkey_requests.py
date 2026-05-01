@@ -19,11 +19,15 @@ def _monkey_check(method):
         :param kwargs: kwargs
         :return: func results
         """
-        if (
+        is_provider = (
             any(True for i in inspect.stack() if "providerModules" in i[1])
             or any(True for i in inspect.stack() if "providers" in i[1])
-        ) and PRE_TERM_BLOCK:
-            raise PreemptiveCancellation('Pre-emptive termination has stopped this request')
+        )
+        if is_provider:
+            if PRE_TERM_BLOCK:
+                raise PreemptiveCancellation('Pre-emptive termination has stopped this request')
+            if 'timeout' not in kwargs:
+                kwargs['timeout'] = 30
 
         return method(*args, **kwargs)
 
