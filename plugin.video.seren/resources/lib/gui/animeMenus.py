@@ -18,6 +18,7 @@ class Menus:
         self.page_start = (g.PAGE - 1) * self.page_limit
         self.page_end = g.PAGE * self.page_limit
         self.anime_genre = "anime"
+        self.all_years = f"1960-{datetime.datetime.now().year}"
 
     @cached_property
     def shows_database(self):
@@ -172,6 +173,7 @@ class Menus:
         trakt_list = self.shows_database.extract_trakt_page(
             "shows/popular",
             genres=self.anime_genre,
+            years=self.all_years,
             page=g.PAGE,
             extended="full",
         )
@@ -185,6 +187,7 @@ class Menus:
         trakt_list = self.shows_database.extract_trakt_page(
             "shows/trending",
             genres=self.anime_genre,
+            years=self.all_years,
             page=g.PAGE,
             extended="full",
         )
@@ -241,8 +244,9 @@ class Menus:
     def anime_shows_played(self):
         """List most played anime TV shows."""
         trakt_list = self.shows_database.extract_trakt_page(
-            "shows/played",
+            "shows/played/weekly",
             genres=self.anime_genre,
+            years=self.all_years,
             page=g.PAGE,
             extended="full",
         )
@@ -254,8 +258,9 @@ class Menus:
     def anime_shows_watched(self):
         """List most watched anime TV shows."""
         trakt_list = self.shows_database.extract_trakt_page(
-            "shows/watched",
+            "shows/watched/weekly",
             genres=self.anime_genre,
+            years=self.all_years,
             page=g.PAGE,
             extended="full",
         )
@@ -269,6 +274,7 @@ class Menus:
         trakt_list = self.shows_database.extract_trakt_page(
             "shows/collected",
             genres=self.anime_genre,
+            years=self.all_years,
             page=g.PAGE,
             extended="full",
         )
@@ -282,6 +288,7 @@ class Menus:
         trakt_list = self.shows_database.extract_trakt_page(
             "shows/anticipated",
             genres=self.anime_genre,
+            years=self.all_years,
             page=g.PAGE,
             extended="full",
         )
@@ -299,6 +306,7 @@ class Menus:
         trakt_list = self.movies_database.extract_trakt_page(
             "movies/popular",
             genres=self.anime_genre,
+            years=self.all_years,
             page=g.PAGE,
             extended="full",
         )
@@ -312,6 +320,7 @@ class Menus:
         trakt_list = self.movies_database.extract_trakt_page(
             "movies/trending",
             genres=self.anime_genre,
+            years=self.all_years,
             page=g.PAGE,
             extended="full",
         )
@@ -368,8 +377,9 @@ class Menus:
     def anime_movies_played(self):
         """List most played anime movies."""
         trakt_list = self.movies_database.extract_trakt_page(
-            "movies/played",
+            "movies/played/weekly",
             genres=self.anime_genre,
+            years=self.all_years,
             page=g.PAGE,
             extended="full",
         )
@@ -381,8 +391,9 @@ class Menus:
     def anime_movies_watched(self):
         """List most watched anime movies."""
         trakt_list = self.movies_database.extract_trakt_page(
-            "movies/watched",
+            "movies/watched/weekly",
             genres=self.anime_genre,
+            years=self.all_years,
             page=g.PAGE,
             extended="full",
         )
@@ -396,6 +407,7 @@ class Menus:
         trakt_list = self.movies_database.extract_trakt_page(
             "movies/collected",
             genres=self.anime_genre,
+            years=self.all_years,
             page=g.PAGE,
             extended="full",
         )
@@ -409,6 +421,7 @@ class Menus:
         trakt_list = self.movies_database.extract_trakt_page(
             "movies/anticipated",
             genres=self.anime_genre,
+            years=self.all_years,
             page=g.PAGE,
             extended="full",
         )

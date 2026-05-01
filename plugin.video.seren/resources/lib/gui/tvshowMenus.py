@@ -288,7 +288,10 @@ class Menus:
         g.close_directory(g.CONTENT_MENU)
 
     def generic_endpoint(self, endpoint):
-        trakt_list = self.shows_database.extract_trakt_page(f"shows/{endpoint}", page=g.PAGE, extended="full")
+        _period_endpoints = {"played": "played/weekly", "watched": "watched/weekly"}
+        trakt_list = self.shows_database.extract_trakt_page(
+            f"shows/{_period_endpoints.get(endpoint, endpoint)}", page=g.PAGE, extended="full"
+        )
         _endpoint_labels = {
             "trending": g.get_language_string(30006),
             "popular": g.get_language_string(30004),
